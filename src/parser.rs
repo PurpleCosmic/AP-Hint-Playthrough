@@ -53,7 +53,7 @@ fn parse_from_existing_slot<'src>(slots: &Vec<Slot>) -> impl Parser<'src, &'src 
 fn object_parser<'src>(slots: &Vec<Slot>) -> impl Parser<'src, &'src str, Thingymabob> {
     let delimited_slot_parser =
         || parse_from_existing_slot(slots).delimited_by(just("("), just(")"));
-    let location = any()
+    let location = none_of("{}")
         .and_is(delimited_slot_parser().not())
         .repeated()
         .collect::<String>();
@@ -90,12 +90,32 @@ fn check_parser<'src>(slots: &Vec<Slot>) -> impl Parser<'src, &'src str, Spoiler
     ))
 }
 
-// fn sphere_parser<'src>(slots: &Vec<Slot>) -> impl Parser<'src, &'src str, Sphere> {}
-//
-// pub fn playthrough_parser<'src>(
-//     slots: &Vec<Slot>,
-// ) -> impl Parser<'src, &'src str, Vec<Sphere>> {
-// }
+fn sphere_parser<'src>(slots: &Vec<Slot>) -> impl Parser<'src, &'src str, Sphere> {
+    text::int(10).then_ignore(just(":")).padded().ignore_then(
+        (just("\n")
+            .repeated()
+            .padded()
+            .ignore_then(check_parser(slots))
+            .then_ignore(just("\n").repeated())
+            .padded())
+        .repeated()
+        .collect::<Sphere>()
+        .delimited_by(just("{"), just("}")),
+    )
+}
+
+pub fn playthrough_parser<'src>(slots: &Vec<Slot>) -> impl Parser<'src, &'src str, Vec<Sphere>> {
+    just("Playthrough")
+        .padded()
+        .then_ignore(just(":"))
+        .padded()
+        .then_ignore(just("\n").repeated())
+        .ignore_then(
+            (sphere_parser(slots).then_ignore(just("\n").repeated()))
+                .repeated()
+                .collect::<Vec<_>>(),
+        )
+}
 
 #[cfg(test)]
 mod test_parser {
@@ -245,6 +265,102 @@ mod test_parser {
                 sender: String::from("slot1"),
                 receiver: String::from("slot2")
             })
+        );
+    }
+
+    #[test]
+    fn it_parses_a_sphere() {
+        assert_eq!(
+            sphere_parser(&slot_names())
+                .parse("1: {\n  loc1 (slot1): item1 (slot2)\n  loc2 (slot1): item2 (slot2)\n}")
+                .into_result(),
+            Ok(vec![
+                SpoilerEntry {
+                    location: String::from("loc1"),
+                    sender: String::from("slot1"),
+                    item: String::from("item1"),
+                    receiver: String::from("slot2"),
+                },
+                SpoilerEntry {
+                    location: String::from("loc2"),
+                    sender: String::from("slot1"),
+                    item: String::from("item2"),
+                    receiver: String::from("slot2"),
+                },
+            ])
+        );
+    }
+
+    #[test]
+    fn it_parses_playthroughs() {
+        assert_eq!(
+            playthrough_parser(&slot_names())
+                .parse("Playthrough:\n\n\n1: {\n  loc1 (slot1): item1 (slot2)\n  loc2 (slot1): item2 (slot2)\n}")
+                .into_result(),
+            Ok(vec![vec![
+                SpoilerEntry {
+                    location: String::from("loc1"),
+                    sender: String::from("slot1"),
+                    item: String::from("item1"),
+                    receiver: String::from("slot2"),
+                },
+                SpoilerEntry {
+                    location: String::from("loc2"),
+                    sender: String::from("slot1"),
+                    item: String::from("item2"),
+                    receiver: String::from("slot2"),
+                },
+            ]])
+        );
+        assert_eq!(
+            playthrough_parser(&slot_names())
+                .parse(
+                    "Playthrough: \
+                    \
+                    \
+                    \
+                    0: {\
+                        item1 (slot2)\
+                        item2 (slot2)\
+                    }\
+                    \
+                    \
+                    1: {\
+                        loc1 (slot1): item3 (slot2)\
+                        loc2 (slot2): item4 (slot1)\
+                    }"
+                )
+                .into_result(),
+            Ok(vec![
+                vec![
+                    SpoilerEntry {
+                        location: String::from("Server"),
+                        sender: String::from("Archipelago"),
+                        item: String::from("item1"),
+                        receiver: String::from("slot2"),
+                    },
+                    SpoilerEntry {
+                        location: String::from("Server"),
+                        sender: String::from("Archipelago"),
+                        item: String::from("item2"),
+                        receiver: String::from("slot2"),
+                    },
+                ],
+                vec![
+                    SpoilerEntry {
+                        location: String::from("loc1"),
+                        sender: String::from("slot1"),
+                        item: String::from("item3"),
+                        receiver: String::from("slot2"),
+                    },
+                    SpoilerEntry {
+                        location: String::from("loc2"),
+                        sender: String::from("slot2"),
+                        item: String::from("item4"),
+                        receiver: String::from("slot1"),
+                    },
+                ]
+            ])
         );
     }
 }
