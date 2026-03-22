@@ -1,0 +1,42 @@
+Player 1: slot1
+Game: The game
+Farm Arrays - Echo (slot1): Shrek's Swamp Unlock (slot2)
+Clear Score 0001 (slot1): Upslash (slot2)
+AF (Depths): Upper Right Chest (1st Reward) (slot1): Gate: Outskirts to Drainage System (slot2)
+Goal (slot1): Victory (slot1)
+
+Player 2: slot2
+Game: The game II
+
+Player 3: hi_I_have_name
+Game: The Game 0
+Beat Meg (hi_I_have_name): Meg Victory (hi_I_have_name)
+
+
+
+
+Playthrough: 
+
+0: {
+  Anakin Skywalker (Jedi) (slot1)
+  Blelt (slot2)
+}
+1: {
+  Farm Arrays - Echo (slot1): Shrek's Swamp Unlock (slot2)
+  Beat Meg (hi_I_have_name): Meg Victory (hi_I_have_name)
+  Clear Score 0001 (slot1): Upslash (slot2)
+}
+2: {
+  AF (Depths): Upper Right Chest (1st Reward) (slot1): Gate: Outskirts to Drainage System (slot2)
+}
+3: {
+  Goal (slot1): Victory (slot1)
+}
+
+Paths: 
+
+Here be some paths to some items (slot1)
+      Room1 -> Room2
+  =>  Starting room -> Room1
+  =>  Room1 -> Literally just go to the next room vro
+  =>  Room2
