@@ -11,7 +11,7 @@ struct Thingymabob {
     player: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SpoilerEntry {
     pub location: String,
     pub item: String,
@@ -19,7 +19,8 @@ pub struct SpoilerEntry {
     pub receiver: String,
 }
 
-type Sphere = Vec<SpoilerEntry>;
+pub type Sphere = Vec<SpoilerEntry>;
+pub type Playthrough = Vec<Sphere>;
 
 pub fn slot_parser<'src>() -> impl Parser<'src, &'src str, Slot> {
     just("Player ")
