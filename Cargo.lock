@@ -968,6 +968,7 @@ version = "0.1.0"
 dependencies = [
  "archipelago_rs",
  "chumsky",
+ "rand 0.10.0",
 ]
 
 [[package]]
