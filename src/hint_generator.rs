@@ -1,24 +1,57 @@
-use crate::parser::{Playthrough, SpoilerEntry};
+use std::{
+    fs::{self, OpenOptions},
+    io::Write,
+};
+
+use crate::parser::{Playthrough, SpoilerEntry, stored_hint_parser};
+use chumsky::prelude::*;
 use rand::prelude::*;
 
 pub fn generate_hint(
-    playthrough: Playthrough,
-    collected_checks: Vec<SpoilerEntry>,
-    hinted_checks: Vec<SpoilerEntry>,
-) -> Option<SpoilerEntry> {
-    for sphere in playthrough {
+    playthrough: &Playthrough,
+    collected_checks: &Vec<SpoilerEntry>,
+    hinted_checks: &Vec<SpoilerEntry>,
+) -> Option<(SpoilerEntry, usize)> {
+    for (i, sphere) in playthrough.iter().enumerate() {
         let filtered_checks = sphere
             .iter()
             .filter(|entrya| !collected_checks.contains(entrya) && !hinted_checks.contains(entrya));
         let res = filtered_checks.choose(&mut rand::rng());
         match res {
-            // I think... I should be using references to SpoilerEntries...
-            // instead of full on spoilerentries...
-            Some(val) => return Some(val.clone()),
+            Some(val) => return Some((val.clone(), i)),
             None => continue,
         };
     }
     None
+}
+
+pub fn write_hint(file_path: &String, hint: &SpoilerEntry) -> Result<(), std::io::Error> {
+    let mut file = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(file_path)
+        .expect("Unable to open file");
+
+    let as_str = hint.location.clone()
+        + ";"
+        + hint.item.as_str()
+        + ";"
+        + hint.sender.as_str()
+        + ";"
+        + hint.receiver.as_str()
+        + "\n";
+    file.write_all(as_str.as_bytes())
+}
+
+pub fn read_hints(hint_file: &String) -> Vec<SpoilerEntry> {
+    let f = match fs::read_to_string(hint_file) {
+        Ok(s) => s,
+        Err(_) => "".to_string(),
+    };
+    stored_hint_parser()
+        .parse(&f)
+        .into_result()
+        .expect("Could not parse hint file")
 }
 
 #[cfg(test)]
@@ -41,23 +74,22 @@ mod hint_tests {
         };
         let playthrough = vec![vec![entrya.clone(), entryb.clone()]];
 
-        assert!(generate_hint(playthrough.clone(), vec![], vec![]).is_some());
+        assert!(generate_hint(&playthrough, &vec![], &vec![]).is_some());
         assert_eq!(
-            generate_hint(playthrough.clone(), vec![entrya.clone()], vec![]),
-            Some(entryb.clone())
+            generate_hint(&playthrough, &vec![entrya.clone()], &vec![]),
+            Some((entryb.clone(), 0))
         );
         assert_eq!(
-            generate_hint(playthrough.clone(), vec![], vec![entryb.clone()]),
-            Some(entrya.clone())
+            generate_hint(&playthrough.clone(), &vec![], &vec![entryb.clone()]),
+            Some((entrya.clone(), 0))
         );
         assert_eq!(
             generate_hint(
-                playthrough.clone(),
-                vec![entrya.clone()],
-                vec![entryb.clone()]
+                &playthrough.clone(),
+                &vec![entrya.clone()],
+                &vec![entryb.clone()]
             ),
             None
         );
-        assert!(false);
     }
 }
