@@ -1,4 +1,5 @@
 use playthrough_hinter::parser::*;
+use playthrough_hinter::types::*;
 use std::fs;
 
 #[test]

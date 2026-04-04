@@ -16,10 +16,8 @@ pub fn slot_parser<'src>() -> impl Parser<'src, &'src str, Slot> {
         .ignore_then(text::int(10).repeated())
         .ignore_then(just(":"))
         .padded()
-        .ignore_then(text::ascii::ident())
-        .map(|s: &str| Slot {
-            player: String::from(s),
-        })
+        .ignore_then(none_of("\n").repeated().collect::<String>())
+        .map(|s: String| Slot { player: s })
 }
 
 pub fn slots_parser<'src>() -> impl Parser<'src, &'src str, Vec<Slot>> {
@@ -209,6 +207,13 @@ mod test_parser {
         assert_eq!(
             slot_parser().parse("Player 12: slot12").into_result(),
             Ok(slot("slot12"))
+        );
+
+        assert_eq!(
+            slot_parser()
+                .parse("Player 1212: Elias & Ruben")
+                .into_result(),
+            Ok(slot("Elias & Ruben"))
         );
     }
 
