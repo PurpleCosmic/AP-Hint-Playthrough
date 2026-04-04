@@ -1,27 +1,15 @@
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+
 use chumsky::prelude::*;
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Slot {
-    pub player: String,
-}
+use crate::types::{Slot, Sphere, SpoilerEntry};
 
 #[derive(Debug, PartialEq)]
 struct Thingymabob {
     object: String,
     player: String,
 }
-
-#[repr(C)]
-#[derive(Debug, PartialEq, Clone)]
-pub struct SpoilerEntry {
-    pub location: String,
-    pub item: String,
-    pub sender: String,
-    pub receiver: String,
-}
-
-pub type Sphere = Vec<SpoilerEntry>;
-pub type Playthrough = Vec<Sphere>;
 
 pub fn slot_parser<'src>() -> impl Parser<'src, &'src str, Slot> {
     just("Player ")
@@ -163,6 +151,22 @@ pub fn stored_hint_parser<'src>() -> impl Parser<'src, &'src str, Vec<SpoilerEnt
         });
 
     entry.repeated().collect::<Vec<_>>()
+}
+
+pub fn get_seed_from_file(path: &str) -> Result<String, std::io::Error> {
+    let file = File::open(path)?;
+    let mut reader = BufReader::new(file);
+
+    let mut first_line = String::new();
+    reader.read_line(&mut first_line)?;
+
+    let seed = first_line
+        .split("Seed: ")
+        .nth(1)
+        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "No seed found"))?
+        .trim();
+
+    Ok(seed.to_string())
 }
 
 #[cfg(test)]
