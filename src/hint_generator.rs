@@ -3,19 +3,19 @@ use std::{
     io::Write,
 };
 
-use crate::parser::{Playthrough, SpoilerEntry, stored_hint_parser};
+use crate::types::{Playthrough, SpoilerEntry};
+use crate::{parser::stored_hint_parser, types::Check};
 use chumsky::prelude::*;
 use rand::prelude::*;
 
 pub fn generate_hint(
     playthrough: &Playthrough,
-    collected_checks: &Vec<SpoilerEntry>,
-    hinted_checks: &Vec<SpoilerEntry>,
+    ignored_checks: &Vec<Check>,
 ) -> Option<(SpoilerEntry, usize)> {
     for (i, sphere) in playthrough.iter().enumerate() {
         let filtered_checks = sphere
             .iter()
-            .filter(|entrya| !collected_checks.contains(entrya) && !hinted_checks.contains(entrya));
+            .filter(|entrya| !ignored_checks.iter().any(|check| check == *entrya));
         let res = filtered_checks.choose(&mut rand::rng());
         match res {
             Some(val) => return Some((val.clone(), i)),
@@ -74,20 +74,22 @@ mod hint_tests {
         };
         let playthrough = vec![vec![entrya.clone(), entryb.clone()]];
 
-        assert!(generate_hint(&playthrough, &vec![], &vec![]).is_some());
+        assert!(generate_hint(&playthrough, &vec![]).is_some());
         assert_eq!(
-            generate_hint(&playthrough, &vec![entrya.clone()], &vec![]),
+            generate_hint(&playthrough, &vec![Check::Spoiler(entrya.clone())]),
             Some((entryb.clone(), 0))
         );
         assert_eq!(
-            generate_hint(&playthrough.clone(), &vec![], &vec![entryb.clone()]),
+            generate_hint(&playthrough.clone(), &vec![Check::Spoiler(entryb.clone())]),
             Some((entrya.clone(), 0))
         );
         assert_eq!(
             generate_hint(
                 &playthrough.clone(),
-                &vec![entrya.clone()],
-                &vec![entryb.clone()]
+                &vec![
+                    Check::Spoiler(entrya.clone()),
+                    Check::Spoiler(entryb.clone())
+                ]
             ),
             None
         );
