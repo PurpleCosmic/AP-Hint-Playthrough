@@ -2,7 +2,7 @@ extern crate getopts;
 use directories::ProjectDirs;
 use getopts::Options;
 use playthrough_hinter::parser::get_seed_from_file;
-use playthrough_hinter::server::get_checks;
+use playthrough_hinter::server::get_checked_locations;
 use playthrough_hinter::types::Check;
 use std::env;
 use std::fs;
@@ -60,7 +60,7 @@ fn main() {
     ignored_checks.extend(hinted_checks.into_iter().map(Check::Spoiler));
 
     for slot in slots.iter() {
-        let checks = get_checks(&slot.player, server_url);
+        let checks = get_checked_locations(&slot.player, server_url);
         ignored_checks.extend(checks.into_iter().map(Check::Location));
     }
 

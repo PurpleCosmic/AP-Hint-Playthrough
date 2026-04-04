@@ -24,12 +24,12 @@ fn connect(url: &str, slot: &str) -> Result<ap::Connection<()>, ap::Error> {
     }
 }
 
-pub fn get_checks(slot: &str, url: &str) -> Vec<Location> {
+pub fn get_checked_locations(slot: &str, url: &str) -> Vec<Location> {
     let mut connection = connect(url, slot).expect("Failed to connect to archipelago server");
 
     match connection.state_mut() {
         ap::ConnectionState::Connected(client) => client
-            .unchecked_locations()
+            .checked_locations()
             .map(|location| Location {
                 location: location.name().as_str().to_string(),
                 player: slot.to_string(),

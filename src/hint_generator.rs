@@ -13,6 +13,9 @@ pub fn generate_hint(
     ignored_checks: &Vec<Check>,
 ) -> Option<(SpoilerEntry, usize)> {
     for (i, sphere) in playthrough.iter().enumerate() {
+        if i == 0 {
+            continue; // We can safely ignore the 0th sphere
+        }
         let filtered_checks = sphere
             .iter()
             .filter(|entrya| !ignored_checks.iter().any(|check| check == *entrya));
