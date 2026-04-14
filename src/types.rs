@@ -1,3 +1,5 @@
+use archipelago_rs::AsLocationId;
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Slot {
     pub player: String,
@@ -7,6 +9,17 @@ pub struct Slot {
 pub struct Location {
     pub location: String,
     pub player: String,
+    pub id: i64,
+}
+
+impl AsLocationId for Location {
+    fn as_location_id(&self) -> i64 {
+        self.id
+    }
+
+    fn same_location(&self, other: impl AsLocationId) -> bool {
+        self.id == other.as_location_id()
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -3,6 +3,7 @@ use directories::ProjectDirs;
 use getopts::Options;
 use playthrough_hinter::parser::get_seed_from_file;
 use playthrough_hinter::server::get_checked_locations;
+use playthrough_hinter::server::hint_spoiler_entry;
 use playthrough_hinter::types::Check;
 use std::env;
 use std::fs;
@@ -59,17 +60,21 @@ fn main() {
     let hinted_checks = read_hints(&hint_file);
     ignored_checks.extend(hinted_checks.into_iter().map(Check::Spoiler));
 
+    //// -- Fetch all checked locations
     for slot in slots.iter() {
         let checks = get_checked_locations(&slot.player, server_url);
         ignored_checks.extend(checks.into_iter().map(Check::Location));
     }
 
+    //// -- Generate hint
     let (hint, sphere) =
         generate_hint(&playthrough, &ignored_checks).expect("Could not generate hint");
 
-    let _ = write_hint(&hint_file, &hint);
+    //// -- Log Hint
     println!(
-        "Location \"{}\" in {}'s world contains an important item! (Sphere {})",
-        hint.location, hint.sender, sphere
+        "Location \"{}\" in {}'s world contains \"{}\" for {}! (Sphere {})",
+        hint.location, hint.sender, hint.item, hint.receiver, sphere
     );
+    let _ = hint_spoiler_entry(&server_url, &hint);
+    let _ = write_hint(&hint_file, &hint);
 }
