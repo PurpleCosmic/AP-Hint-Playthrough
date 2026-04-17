@@ -19,6 +19,7 @@ fn main() {
 
     let mut opts = Options::new();
     opts.optopt("", "hint_file", "Set file used to store hints", "HINT_FILE");
+    opts.optopt("p", "pass", "Set password", "PASSWORD");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
@@ -32,6 +33,11 @@ fn main() {
     let spoiler_file = &matches.free[1];
 
     let seed = get_seed_from_file(spoiler_file).expect("Could not read seed from spoiler file");
+
+    let password = match matches.opt_str("pass") {
+        Some(str) => str,
+        None => "".to_string(),
+    };
 
     let hint_file = match matches.opt_str("hint_file") {
         Some(str) => str,
@@ -62,7 +68,7 @@ fn main() {
 
     //// -- Fetch all checked locations
     for slot in slots.iter() {
-        let checks = get_checked_locations(&slot.player, server_url);
+        let checks = get_checked_locations(&slot.player, server_url, &password);
         ignored_checks.extend(checks.into_iter().map(Check::Location));
     }
 
@@ -75,6 +81,6 @@ fn main() {
         "Location \"{}\" in {}'s world contains \"{}\" for {}! (Sphere {})",
         hint.location, hint.sender, hint.item, hint.receiver, sphere
     );
-    let _ = hint_spoiler_entry(&server_url, &hint);
+    let _ = hint_spoiler_entry(&server_url, &password, &hint);
     let _ = write_hint(&hint_file, &hint);
 }

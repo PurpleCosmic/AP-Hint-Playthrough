@@ -2,17 +2,19 @@ use archipelago_rs::{self as ap, CreateAsHint, tags};
 
 use crate::types::{Location, SpoilerEntry};
 
-fn connect(url: &str, slot: &str) -> Result<ap::Connection<()>, ap::Error> {
+fn connect(url: &str, slot: &str, password: &str) -> Result<ap::Connection<()>, ap::Error> {
     let mut connection = ap::Connection::<()>::new(
         url,
         slot,
         None::<String>,
-        ap::ConnectionOptions::new().tags(vec![
-            tags::TRACKER,
-            tags::AP,
-            tags::NO_TEXT,
-            "APPlaythroughHinter",
-        ]),
+        ap::ConnectionOptions::new()
+            .tags(vec![
+                tags::TRACKER,
+                tags::AP,
+                tags::NO_TEXT,
+                "APPlaythroughHinter",
+            ])
+            .password(password),
     );
     while connection.is_connecting() {
         connection.update();
@@ -29,8 +31,9 @@ fn connect(url: &str, slot: &str) -> Result<ap::Connection<()>, ap::Error> {
     }
 }
 
-pub fn get_checked_locations(slot: &str, url: &str) -> Vec<Location> {
-    let mut connection = connect(url, slot).expect("Failed to connect to archipelago server");
+pub fn get_checked_locations(slot: &str, url: &str, password: &str) -> Vec<Location> {
+    let mut connection =
+        connect(url, slot, password).expect("Failed to connect to archipelago server");
 
     match connection.state_mut() {
         ap::ConnectionState::Connected(client) => client
@@ -45,8 +48,8 @@ pub fn get_checked_locations(slot: &str, url: &str) -> Vec<Location> {
     }
 }
 
-pub fn hint_spoiler_entry(url: &str, entry: &SpoilerEntry) {
-    let mut connection = connect(url, &entry.sender)
+pub fn hint_spoiler_entry(url: &str, password: &str, entry: &SpoilerEntry) {
+    let mut connection = connect(url, &entry.sender, password)
         .expect("Failed to connect to archipelago server while trying to hint location");
 
     match connection.state_mut() {
